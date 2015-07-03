@@ -1,0 +1,52 @@
+From 3f37fe759d4321984e3116953fb4610a072f1674 Mon Sep 17 00:00:00 2001
+From: Arun Babu Neelicattu <arun.neelicattu@gmail.com>
+Date: Fri, 3 Jul 2015 13:58:41 +1000
+Subject: [PATCH] Use version, release and arch from specfile
+
+---
+ scripts/build.sh | 16 +++-------------
+ 1 file changed, 3 insertions(+), 13 deletions(-)
+
+diff --git a/scripts/build.sh b/scripts/build.sh
+index 2553f5b..7932984 100755
+--- a/scripts/build.sh
++++ b/scripts/build.sh
+@@ -10,13 +10,9 @@ DIR="$( cd -P "$( dirname "$SOURCE" )/.." && pwd )"
+ # Change into that directory
+ cd "$DIR"
+ 
+-# Get the git commit
+-GIT_COMMIT=$(git rev-parse HEAD)
+-GIT_DIRTY=$(test -n "`git status --porcelain`" && echo "+CHANGES" || true)
+-
+ # Determine the arch/os combos we're building for
+-XC_ARCH=${XC_ARCH:-"386 amd64 arm"}
+-XC_OS=${XC_OS:-linux darwin windows freebsd openbsd}
++XC_OS=$(go env GOOS)
++XC_ARCH=$(go env GOARCH)
+ 
+ # Get dependencies unless running in quick mode
+ if [ "${TF_QUICKDEV}x" == "x" ]; then
+@@ -30,18 +26,12 @@ rm -f bin/*
+ rm -rf pkg/*
+ mkdir -p bin/
+ 
+-# If its dev mode, only build for ourself
+-if [ "${TF_DEV}x" != "x" ]; then
+-    XC_OS=$(go env GOOS)
+-    XC_ARCH=$(go env GOARCH)
+-fi
+-
+ # Build!
+ echo "==> Building..."
+ gox \
+     -os="${XC_OS}" \
+     -arch="${XC_ARCH}" \
+-    -ldflags "-X main.GitCommit ${GIT_COMMIT}${GIT_DIRTY}" \
++    -ldflags "${CGO_LDFLAGS} -X main.VERSION '${RPM_VERSION}-${RPM_RELEASE}'" \
+     -output "pkg/{{.OS}}_{{.Arch}}/terraform-{{.Dir}}" \
+     ./...
+ 
+-- 
+2.4.3
+
